@@ -1,0 +1,120 @@
+[
+  {
+    "id": 1,
+    "name": "Power Bowl",
+    "price": 9.99,
+    "description": "",
+    "category": "Bowls",
+    "image": "/uploads/product-1765051844212-951797172.png",
+    "toppings": [
+      {
+        "name": "White rice",
+        "price": 0,
+        "halfSameAsBase": false,
+        "preSelected": false,
+        "hasPortions": true,
+        "halfPrice": 0,
+        "doublePrice": 0,
+        "hasHalf": true,
+        "hasDouble": true
+      },
+      {
+        "name": "Brown rice",
+        "price": 0,
+        "halfSameAsBase": false,
+        "preSelected": false,
+        "hasPortions": true,
+        "hasHalf": true,
+        "hasDouble": true
+      },
+      {
+        "name": "Steak",
+        "price": 0.75,
+        "halfSameAsBase": false,
+        "preSelected": false,
+        "hasPortions": true,
+        "halfPrice": 0.75,
+        "hasHalf": true,
+        "hasDouble": true
+      },
+      {
+        "name": "Chicken",
+        "price": 0.25,
+        "halfSameAsBase": false,
+        "preSelected": false,
+        "hasPortions": true,
+        "halfPrice": 25,
+        "hasHalf": true,
+        "hasDouble": true
+      },
+      {
+        "name": "Steak/Chicken",
+        "price": 1,
+        "halfSameAsBase": false,
+        "preSelected": false,
+        "hasPortions": true,
+        "hasHalf": true,
+        "hasDouble": true
+      },
+      {
+        "name": "Pinto beans",
+        "price": 0,
+        "halfSameAsBase": false,
+        "preSelected": false,
+        "hasPortions": true,
+        "hasHalf": true,
+        "hasDouble": true
+      },
+      {
+        "name": "Black beans",
+        "price": 0,
+        "halfSameAsBase": false,
+        "preSelected": false,
+        "hasPortions": true,
+        "hasHalf": true,
+        "hasDouble": true
+      },
+      {
+        "name": "Onions",
+        "price": 0,
+        "halfSameAsBase": false,
+        "preSelected": true,
+        "hasPortions": true,
+        "hasHalf": true,
+        "hasDouble": true
+      },
+      {
+        "name": "Peppers",
+        "price": 0,
+        "halfSameAsBase": false,
+        "preSelected": true,
+        "hasPortions": true,
+        "hasHalf": true,
+        "hasDouble": true
+      }
+    ],
+    "ingredients": [
+      "Rice White/brown",
+      "Beans Black/Pinto",
+      "meat Chicken/Steak",
+      "Veggies Onions & peppers"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "veggie bowl",
+    "price": 12.99,
+    "description": "",
+    "category": "Vegetarian",
+    "image": null,
+    "toppings": [],
+    "ingredients": [
+      "Lettuce",
+      "Tomato",
+      "Onions",
+      "Bell Peppers (Red/Green)",
+      "Balsamic vinegar",
+      "Sprouts"
+    ]
+  }
+]
