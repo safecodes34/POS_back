@@ -1,3 +1,6 @@
+// Load environment variables FIRST before using them
+require('dotenv').config();
+
 const express = require('express');
 const https = require('https');
 const http = require('http');
@@ -7,7 +10,6 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 4001;
