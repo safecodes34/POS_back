@@ -119,7 +119,7 @@ app.use(cors({
 // Handle preflight requests
 app.options('*', (req, res) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && origin?.includes('localhost'))) {
+  if (allowedOrigins.includes(origin) || (origin && origin.includes('vercel.app')) || (process.env.NODE_ENV !== 'production' && origin?.includes('localhost'))) {
     res.header('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -159,7 +159,7 @@ app.use((req, res, next) => {
 // Serve uploaded images with CORS headers
 app.use('/uploads', (req, res, next) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && origin?.includes('localhost'))) {
+  if (allowedOrigins.includes(origin) || (origin && origin.includes('vercel.app')) || (process.env.NODE_ENV !== 'production' && origin?.includes('localhost'))) {
     res.header('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Credentials', 'true');
