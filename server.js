@@ -88,6 +88,7 @@ const allowedOrigins = [
   'https://localhost:3001',
   process.env.FRONTEND_URL, // e.g., https://your-app.vercel.app
   'https://pos-front-one.vercel.app', // Production frontend
+  'https://pos-front-topaz.vercel.app', // Current Vercel deployment
 ].filter(Boolean); // Remove undefined values
 
 // Middleware
@@ -96,11 +97,15 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
+    // Normalize origin (remove trailing slash)
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    
     // Check if origin is in allowed list (exact match)
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.indexOf(normalizedOrigin) !== -1 || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
-    } else if (origin && origin.includes('vercel.app')) {
-      // Allow all Vercel preview URLs
+    } else if (origin && (origin.includes('vercel.app') || normalizedOrigin.includes('vercel.app'))) {
+      // Allow all Vercel preview URLs (case-insensitive check)
+      console.log('✅ CORS: Allowing Vercel origin:', origin);
       callback(null, true);
     } else {
       // In development, allow localhost variations
@@ -121,7 +126,12 @@ app.use(cors({
 // Handle preflight requests
 app.options('*', (req, res) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin) || (origin && origin.includes('vercel.app')) || (process.env.NODE_ENV !== 'production' && origin?.includes('localhost'))) {
+  const normalizedOrigin = origin ? origin.replace(/\/$/, '') : null;
+  if (allowedOrigins.includes(origin) || 
+      allowedOrigins.includes(normalizedOrigin) || 
+      (origin && origin.includes('vercel.app')) || 
+      (normalizedOrigin && normalizedOrigin.includes('vercel.app')) || 
+      (process.env.NODE_ENV !== 'production' && origin?.includes('localhost'))) {
     res.header('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -161,7 +171,12 @@ app.use((req, res, next) => {
 // Serve uploaded images with CORS headers
 app.use('/uploads', (req, res, next) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin) || (origin && origin.includes('vercel.app')) || (process.env.NODE_ENV !== 'production' && origin?.includes('localhost'))) {
+  const normalizedOrigin = origin ? origin.replace(/\/$/, '') : null;
+  if (allowedOrigins.includes(origin) || 
+      allowedOrigins.includes(normalizedOrigin) || 
+      (origin && origin.includes('vercel.app')) || 
+      (normalizedOrigin && normalizedOrigin.includes('vercel.app')) || 
+      (process.env.NODE_ENV !== 'production' && origin?.includes('localhost'))) {
     res.header('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Credentials', 'true');
