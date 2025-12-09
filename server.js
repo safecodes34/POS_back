@@ -1,5 +1,6 @@
 const express = require('express');
 const https = require('https');
+const http = require('http');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
@@ -2776,41 +2777,84 @@ app.get('/api/subscription/verify-session', async (req, res) => {
   }
 });
 
-// SSL Certificate paths
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, '../ssl/server.key')),
-  cert: fs.readFileSync(path.join(__dirname, '../ssl/server.crt'))
-};
+// Server startup - Use HTTP in production (Railway handles HTTPS), HTTPS in development
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Create HTTPS server
-https.createServer(sslOptions, app).listen(PORT, () => {
-  console.log(`🚀 Backend HTTPS server running on https://localhost:${PORT}`);
-  console.log(`📝 Health check: https://localhost:${PORT}/api/health`);
-  console.log(`🔐 Auth endpoints:`);
-  console.log(`   POST https://localhost:${PORT}/api/auth/signup`);
-  console.log(`   POST https://localhost:${PORT}/api/auth/login`);
-  console.log(`   GET  https://localhost:${PORT}/api/auth/user`);
-  console.log(`⚙️  Settings endpoints:`);
-  console.log(`   GET  https://localhost:${PORT}/api/user/settings`);
-  console.log(`   POST https://localhost:${PORT}/api/user/settings`);
-  console.log(`👥 User Management:`);
-  console.log(`   GET  https://localhost:${PORT}/api/users`);
-  console.log(`   🌐 https://localhost:${PORT}/users (Web Interface)`);
-  console.log(`📋 Activity Logs:`);
-  console.log(`   GET  https://localhost:${PORT}/api/user-logs`);
-  console.log(`   🌐 https://localhost:${PORT}/logs (Web Interface)`);
-  console.log(`💳 Stripe Terminal endpoints:`);
-  console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/connection-token`);
-  console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/create-payment-intent`);
-  console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/process-payment`);
-  console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/capture-payment`);
-  console.log(`   GET  https://localhost:${PORT}/api/stripe-terminal/payment-intent/:id`);
-  console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/cancel-payment`);
-  console.log(`💳 Subscription endpoints:`);
-  console.log(`   GET  https://localhost:${PORT}/api/subscription/publishable-key`);
-  console.log(`   POST https://localhost:${PORT}/api/subscription/create-subscription`);
-  console.log(`   POST https://localhost:${PORT}/api/subscription/confirm-payment`);
-  console.log(`   POST https://localhost:${PORT}/api/subscription/update-status`);
-});
+if (isProduction) {
+  // Production: Use HTTP (Railway handles TLS termination)
+  http.createServer(app).listen(PORT, () => {
+    console.log(`🚀 Backend HTTP server running on port ${PORT}`);
+    console.log(`📝 Health check: /api/health`);
+    console.log(`🔐 Auth endpoints:`);
+    console.log(`   POST /api/auth/signup`);
+    console.log(`   POST /api/auth/login`);
+    console.log(`   GET  /api/auth/user`);
+    console.log(`⚙️  Settings endpoints:`);
+    console.log(`   GET  /api/user/settings`);
+    console.log(`   POST /api/user/settings`);
+    console.log(`👥 User Management:`);
+    console.log(`   GET  /api/users`);
+    console.log(`   🌐 /users (Web Interface)`);
+    console.log(`📋 Activity Logs:`);
+    console.log(`   GET  /api/user-logs`);
+    console.log(`   🌐 /logs (Web Interface)`);
+    console.log(`💳 Stripe Terminal endpoints:`);
+    console.log(`   POST /api/stripe-terminal/connection-token`);
+    console.log(`   POST /api/stripe-terminal/create-payment-intent`);
+    console.log(`   POST /api/stripe-terminal/process-payment`);
+    console.log(`   POST /api/stripe-terminal/capture-payment`);
+    console.log(`   GET  /api/stripe-terminal/payment-intent/:id`);
+    console.log(`   POST /api/stripe-terminal/cancel-payment`);
+    console.log(`💳 Subscription endpoints:`);
+    console.log(`   GET  /api/subscription/publishable-key`);
+    console.log(`   POST /api/subscription/create-subscription`);
+    console.log(`   POST /api/subscription/confirm-payment`);
+    console.log(`   POST /api/subscription/update-status`);
+  });
+} else {
+  // Development: Use HTTPS with SSL certificates
+  try {
+    const sslOptions = {
+      key: fs.readFileSync(path.join(__dirname, '../ssl/server.key')),
+      cert: fs.readFileSync(path.join(__dirname, '../ssl/server.crt'))
+    };
+    
+    https.createServer(sslOptions, app).listen(PORT, () => {
+      console.log(`🚀 Backend HTTPS server running on https://localhost:${PORT}`);
+      console.log(`📝 Health check: https://localhost:${PORT}/api/health`);
+      console.log(`🔐 Auth endpoints:`);
+      console.log(`   POST https://localhost:${PORT}/api/auth/signup`);
+      console.log(`   POST https://localhost:${PORT}/api/auth/login`);
+      console.log(`   GET  https://localhost:${PORT}/api/auth/user`);
+      console.log(`⚙️  Settings endpoints:`);
+      console.log(`   GET  https://localhost:${PORT}/api/user/settings`);
+      console.log(`   POST https://localhost:${PORT}/api/user/settings`);
+      console.log(`👥 User Management:`);
+      console.log(`   GET  https://localhost:${PORT}/api/users`);
+      console.log(`   🌐 https://localhost:${PORT}/users (Web Interface)`);
+      console.log(`📋 Activity Logs:`);
+      console.log(`   GET  https://localhost:${PORT}/api/user-logs`);
+      console.log(`   🌐 https://localhost:${PORT}/logs (Web Interface)`);
+      console.log(`💳 Stripe Terminal endpoints:`);
+      console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/connection-token`);
+      console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/create-payment-intent`);
+      console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/process-payment`);
+      console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/capture-payment`);
+      console.log(`   GET  https://localhost:${PORT}/api/stripe-terminal/payment-intent/:id`);
+      console.log(`   POST https://localhost:${PORT}/api/stripe-terminal/cancel-payment`);
+      console.log(`💳 Subscription endpoints:`);
+      console.log(`   GET  https://localhost:${PORT}/api/subscription/publishable-key`);
+      console.log(`   POST https://localhost:${PORT}/api/subscription/create-subscription`);
+      console.log(`   POST https://localhost:${PORT}/api/subscription/confirm-payment`);
+      console.log(`   POST https://localhost:${PORT}/api/subscription/update-status`);
+    });
+  } catch (error) {
+    console.error('❌ Error loading SSL certificates:', error.message);
+    console.log('⚠️  Falling back to HTTP server...');
+    http.createServer(app).listen(PORT, () => {
+      console.log(`🚀 Backend HTTP server running on http://localhost:${PORT} (SSL not available)`);
+    });
+  }
+}
 
 
