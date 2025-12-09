@@ -85,6 +85,7 @@ const menuUpload = multer({
 const allowedOrigins = [
   'https://localhost:3001',
   process.env.FRONTEND_URL, // e.g., https://your-app.vercel.app
+  'https://pos-front-one.vercel.app', // Production frontend
 ].filter(Boolean); // Remove undefined values
 
 // Middleware
@@ -93,14 +94,19 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Check if origin is in allowed list
+    // Check if origin is in allowed list (exact match)
     if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else if (origin && origin.includes('vercel.app')) {
+      // Allow all Vercel preview URLs
       callback(null, true);
     } else {
       // In development, allow localhost variations
       if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
         callback(null, true);
       } else {
+        console.log('❌ CORS blocked origin:', origin);
+        console.log('✅ Allowed origins:', allowedOrigins);
         callback(new Error('Not allowed by CORS'));
       }
     }
