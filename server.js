@@ -2643,25 +2643,13 @@ app.get('/api/subscription/publishable-key', (req, res) => {
 });
 
 // Subscription endpoints
-// Create Stripe Checkout Session for subscription
+// Create Stripe Checkout Session for subscription with setup fee
 app.post('/api/subscription/create-subscription', async (req, res) => {
   try {
-    const { email, planId } = req.body;
+    const { email, discountCode } = req.body;
     
-    if (!email || !planId) {
-      return res.status(400).json({ error: 'Email and plan ID are required' });
-    }
-    
-    // Define subscription plans
-    const plans = {
-      basic: { name: 'Basic Plan', price: 2999, description: 'Perfect for small businesses' }, // $29.99
-      pro: { name: 'Pro Plan', price: 5999, description: 'For growing businesses' }, // $59.99
-      enterprise: { name: 'Enterprise Plan', price: 9999, description: 'For large operations' } // $99.99
-    };
-    
-    const plan = plans[planId];
-    if (!plan) {
-      return res.status(400).json({ error: 'Invalid plan ID' });
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
     }
     
     // Find or create customer
@@ -2688,39 +2676,106 @@ app.post('/api/subscription/create-subscription', async (req, res) => {
       }
     }
     
-    // Create price if needed (in production, use existing price IDs from Stripe Dashboard)
-    const price = await stripe.prices.create({
-      unit_amount: plan.price,
-      currency: 'usd',
-      recurring: {
-        interval: 'month',
-      },
-      product_data: {
-        name: plan.name,
-        description: plan.description,
-      },
-    });
-    
     // Get the frontend URL for success/cancel URLs
-    // Use the origin from the request or default to localhost:5173 (Vite default)
-    const frontendUrl = req.headers.origin || 'https://localhost:5173';
+    // Use the origin from the request or default to localhost:3001 (current frontend port)
+    const frontendUrl = req.headers.origin || 'https://localhost:3001';
+    console.log('🔗 Frontend URL for checkout:', frontendUrl);
+    console.log('🔗 Request origin:', req.headers.origin);
     
-    // Create Stripe Checkout Session for embedded checkout
+    // Create subscription price for monthly fee ($30.00/month)
+    // In production, you should use existing price IDs from Stripe Dashboard
+    let subscriptionPrice;
+    try {
+      subscriptionPrice = await stripe.prices.create({
+        unit_amount: 3000, // $30.00 in cents
+        currency: 'usd',
+        recurring: {
+          interval: 'month',
+        },
+        product_data: {
+          name: 'Monthly Subscription',
+        },
+      });
+      console.log('✅ Subscription price created:', subscriptionPrice.id);
+    } catch (priceError) {
+      console.error('Error creating subscription price:', priceError);
+      throw new Error('Failed to create subscription price: ' + priceError.message);
+    }
+    
+    // Create one-time price for setup fee ($99.00)
+    let setupFeePrice;
+    try {
+      setupFeePrice = await stripe.prices.create({
+        unit_amount: 9900, // $99.00 in cents
+        currency: 'usd',
+        product_data: {
+          name: 'One-time Setup Fee',
+        },
+      });
+      console.log('✅ Setup fee price created:', setupFeePrice.id);
+    } catch (priceError) {
+      console.error('Error creating setup fee price:', priceError);
+      throw new Error('Failed to create setup fee price: ' + priceError.message);
+    }
+    
+    // Create invoice item for setup fee that will be charged immediately with the subscription
+    // This ensures both charges appear in the checkout and are processed together
+    try {
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        amount: 9900, // $99.00 in cents
+        currency: 'usd',
+        description: 'One-time setup fee',
+        metadata: {
+          userEmail: email,
+        },
+      });
+      console.log('✅ Setup fee invoice item created for customer:', customerId);
+    } catch (invoiceItemError) {
+      console.error('Error creating invoice item for setup fee:', invoiceItemError);
+      // Continue - we'll still show the setup fee in checkout
+    }
+    
+    // Create checkout session for subscription with setup fee
+    // The setup fee invoice item will be included in the first invoice when subscription is created
+    // This ensures both charges ($99 setup fee + $30/month subscription) are processed together
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
         {
-          price: price.id,
+          // Monthly subscription ($30/month)
+          price: subscriptionPrice.id,
           quantity: 1,
         },
       ],
+      // Apply discount code only if provided and valid
+      ...(discountCode && discountCode.trim() ? {
+        discounts: [{
+          promotion_code: discountCode.trim()
+        }]
+      } : {}),
+      // Custom description to show what's included
+      custom_text: {
+        submit: {
+          message: 'You will be charged $99.00 setup fee + $30.00/month subscription',
+        },
+      },
+      subscription_data: {
+        metadata: {
+          userEmail: email,
+          setupFeeAmount: '9900', // Store setup fee amount
+        },
+        description: 'Monthly subscription with $99.00 one-time setup fee',
+      },
       ui_mode: 'embedded',
       return_url: `${frontendUrl}/?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         userEmail: email,
-        planId: planId,
+        planType: 'complete', // Both setup fee and subscription
+        setupFeeAmount: '9900',
+        subscriptionAmount: '3000',
       },
     });
     
@@ -2729,8 +2784,53 @@ app.post('/api/subscription/create-subscription', async (req, res) => {
       clientSecret: session.client_secret
     });
   } catch (error) {
-    console.error('Error creating subscription:', error);
-    res.status(500).json({ error: 'Failed to create subscription: ' + error.message });
+    console.error('❌ Error creating subscription:', error);
+    console.error('❌ Error type:', error.type);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error raw:', error.raw);
+    console.error('❌ Error stack:', error.stack);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to create subscription';
+    let userFriendlyMessage = errorMessage;
+    
+    if (error.type === 'StripeInvalidRequestError') {
+      if (error.code === 'resource_missing' && error.message.includes('promotion_code')) {
+        errorMessage = 'Invalid discount code provided. Please check and try again.';
+        userFriendlyMessage = errorMessage;
+      } else if (error.code === 'account_invalid' || error.message?.toLowerCase().includes('account')) {
+        errorMessage = 'Your Stripe account is currently under review. Payment processing is temporarily unavailable. Please check your Stripe Dashboard for account status.';
+        userFriendlyMessage = 'Payment processing is temporarily unavailable. Your Stripe account is being reviewed. Please check your Stripe Dashboard or contact support.';
+      } else if (error.code === 'parameter_invalid_empty' && error.message?.includes('payment')) {
+        errorMessage = 'Payment processing is currently restricted. This may be due to account verification.';
+        userFriendlyMessage = 'Payment processing is temporarily restricted. Please check your Stripe Dashboard for account status.';
+      } else if (error.message) {
+        errorMessage = `Stripe error: ${error.message}`;
+        // Check for account review related keywords
+        const reviewKeywords = ['review', 'restricted', 'verification', 'under review', 'activation'];
+        if (reviewKeywords.some(keyword => error.message.toLowerCase().includes(keyword))) {
+          userFriendlyMessage = 'Your Stripe account may be under review. Payment processing is temporarily unavailable. Please check your Stripe Dashboard.';
+        } else {
+          userFriendlyMessage = errorMessage;
+        }
+      }
+    } else if (error.code === 'account_invalid' || error.type === 'StripeAPIError') {
+      errorMessage = 'Stripe account issue detected. Please check your Stripe Dashboard for account status.';
+      userFriendlyMessage = 'Payment processing is temporarily unavailable. Your Stripe account may be under review. Please check your Stripe Dashboard.';
+    } else if (error.message) {
+      errorMessage = error.message;
+      userFriendlyMessage = errorMessage;
+    }
+    
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ 
+      error: userFriendlyMessage,
+      technicalError: errorMessage,
+      type: error.type,
+      code: error.code,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -2770,15 +2870,19 @@ app.get('/api/subscription/verify-session', async (req, res) => {
     
     const session = await stripe.checkout.sessions.retrieve(session_id);
     
+    // Handle subscription with setup fee
     if (session.payment_status === 'paid' && session.mode === 'subscription') {
-      // Update user subscription status
       const userEmail = session.metadata?.userEmail || session.customer_email;
+      
       if (userEmail) {
         const user = users.find(u => u.email.toLowerCase() === userEmail.toLowerCase());
         if (user) {
-          user.subscriptionStatus = 'active';
+          // Update customer ID and subscription info
           user.stripeCustomerId = session.customer;
           user.stripeSubscriptionId = session.subscription;
+          user.subscriptionStatus = 'active';
+          user.setupFeePaid = true; // Setup fee was paid as part of the subscription
+          
           saveUsers();
         }
       }
@@ -2786,7 +2890,9 @@ app.get('/api/subscription/verify-session', async (req, res) => {
       res.json({ 
         success: true, 
         paymentStatus: session.payment_status,
-        customerEmail: userEmail
+        customerEmail: userEmail,
+        mode: session.mode,
+        planType: 'complete' // Both setup fee and subscription completed
       });
     } else {
       res.json({ 
