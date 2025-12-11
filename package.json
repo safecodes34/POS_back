@@ -21,13 +21,10 @@
     "https": "^1.0.0",
     "multer": "^2.0.2",
     "openai": "^4.20.0",
+    "sharp": "^0.34.5",
     "stripe": "^14.21.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   }
 }
-
-
-
-

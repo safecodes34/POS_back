@@ -10,6 +10,7 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const imageProcessor = require('./imageProcessor');
 
 const app = express();
 const PORT = process.env.PORT || 4001;
@@ -1936,7 +1937,7 @@ app.get('/api/products/:id', (req, res) => {
 });
 
 // Update product (user-specific - REQUIRED for security)
-app.put('/api/products/:id', upload.single('image'), (req, res, next) => {
+app.put('/api/products/:id', upload.single('image'), async (req, res, next) => {
   console.log('📥 PUT /api/products/:id - Request received');
   console.log('📥 Headers:', JSON.stringify(req.headers, null, 2));
   console.log('📥 Content-Type:', req.headers['content-type']);
@@ -2051,6 +2052,18 @@ app.put('/api/products/:id', upload.single('image'), (req, res, next) => {
         console.log('✅ Deleted old image:', oldImagePath);
       }
     }
+    
+    // Process image with AI detection and cropping
+    try {
+      console.log('🤖 Processing image with AI detection and cropping...');
+      const imagePath = req.file.path;
+      await imageProcessor.processImageInPlace(imagePath);
+      console.log('✅ AI image processing completed');
+    } catch (error) {
+      console.error('⚠️ AI image processing failed, using original image:', error.message);
+      // Continue with original image if processing fails
+    }
+    
     // Set new image path
     product.image = `/uploads/${req.file.filename}`;
     console.log('✅ Image path set to:', product.image);
@@ -2093,7 +2106,7 @@ app.put('/api/products/:id', upload.single('image'), (req, res, next) => {
 });
 
 // Create product (user-specific - REQUIRED for security)
-app.post('/api/products', upload.single('image'), (req, res) => {
+app.post('/api/products', upload.single('image'), async (req, res) => {
   const { name, price, description, category, toppings, ingredients, userEmail } = req.body;
   
   // Require userEmail for security
@@ -2119,6 +2132,19 @@ app.post('/api/products', upload.single('image'), (req, res) => {
     parsedIngredients = ingredients ? (typeof ingredients === 'string' ? JSON.parse(ingredients) : ingredients) : [];
   } catch (e) {
     parsedIngredients = [];
+  }
+
+  // Process image with AI detection and cropping if uploaded
+  if (req.file) {
+    try {
+      console.log('🤖 Processing new product image with AI detection and cropping...');
+      const imagePath = req.file.path;
+      await imageProcessor.processImageInPlace(imagePath);
+      console.log('✅ AI image processing completed');
+    } catch (error) {
+      console.error('⚠️ AI image processing failed, using original image:', error.message);
+      // Continue with original image if processing fails
+    }
   }
 
   const userProducts = getUserProducts(userEmail);
