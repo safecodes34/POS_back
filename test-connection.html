@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .network-info {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Backend Connection Test</h1>
+        
+        <div class="network-info">
+            <strong>Network Information:</strong><br>
+            Current Hostname: <span id="hostname">-</span><br>
+            Current Origin: <span id="origin">-</span><br>
+            Detected Backend URL: <span id="backendUrl">-</span>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 1: Health Endpoint</h3>
+            <button onclick="testHealth()">Test /api/health</button>
+            <div id="healthResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: CORS Preflight (OPTIONS)</h3>
+            <button onclick="testCors()">Test CORS</button>
+            <div id="corsResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Full API Call</h3>
+            <button onclick="testFullApi()">Test Full API</button>
+            <div id="apiResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Direct Fetch (No CORS)</h3>
+            <button onclick="testDirect()">Test Direct</button>
+            <div id="directResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Detect backend URL
+        const hostname = window.location.hostname;
+        const backendUrl = `https://${hostname}:4001`;
+        
+        document.getElementById('hostname').textContent = hostname;
+        document.getElementById('origin').textContent = window.location.origin;
+        document.getElementById('backendUrl').textContent = backendUrl;
+
+        function showResult(elementId, message, isSuccess) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result ' + (isSuccess ? 'success' : 'error');
+            element.textContent = message;
+        }
+
+        async function testHealth() {
+            const resultId = 'healthResult';
+            showResult(resultId, 'Testing...', true);
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(resultId, 
+                        `✅ SUCCESS!\n\nStatus: ${response.status}\nResponse:\n${JSON.stringify(data, null, 2)}`, 
+                        true
+                    );
+                } else {
+                    const text = await response.text();
+                    showResult(resultId, 
+                        `❌ FAILED\n\nStatus: ${response.status}\nStatus Text: ${response.statusText}\nResponse: ${text}`, 
+                        false
+                    );
+                }
+            } catch (error) {
+                showResult(resultId, 
+                    `❌ ERROR\n\nType: ${error.name}\nMessage: ${error.message}\n\nFull Error:\n${error.stack || error}`, 
+                    false
+                );
+            }
+        }
+
+        async function testCors() {
+            const resultId = 'corsResult';
+            showResult(resultId, 'Testing...', true);
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/health`, {
+                    method: 'OPTIONS',
+                    mode: 'cors',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'GET'
+                    }
+                });
+                
+                const corsHeaders = [];
+                response.headers.forEach((value, key) => {
+                    if (key.toLowerCase().includes('access-control')) {
+                        corsHeaders.push(`${key}: ${value}`);
+                    }
+                });
+                
+                showResult(resultId, 
+                    `Status: ${response.status}\n\nCORS Headers:\n${corsHeaders.join('\n') || 'None found'}`, 
+                    response.status === 200 || response.status === 204
+                );
+            } catch (error) {
+                showResult(resultId, 
+                    `❌ ERROR\n\nType: ${error.name}\nMessage: ${error.message}`, 
+                    false
+                );
+            }
+        }
+
+        async function testFullApi() {
+            const resultId = 'apiResult';
+            showResult(resultId, 'Testing...', true);
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(resultId, 
+                        `✅ SUCCESS!\n\nStatus: ${response.status}\nResponse:\n${JSON.stringify(data, null, 2)}\n\nHeaders:\n${Array.from(response.headers.entries()).map(([k,v]) => `${k}: ${v}`).join('\n')}`, 
+                        true
+                    );
+                } else {
+                    showResult(resultId, 
+                        `❌ FAILED\n\nStatus: ${response.status}\nStatus Text: ${response.statusText}`, 
+                        false
+                    );
+                }
+            } catch (error) {
+                showResult(resultId, 
+                    `❌ ERROR\n\nType: ${error.name}\nMessage: ${error.message}\n\nThis could mean:\n- Backend is not running\n- SSL certificate not accepted\n- Firewall blocking\n- CORS issue\n- Network connectivity problem`, 
+                    false
+                );
+            }
+        }
+
+        async function testDirect() {
+            const resultId = 'directResult';
+            showResult(resultId, 'Testing direct connection (bypassing CORS)...', true);
+            
+            // Try to make a request that might work even with CORS issues
+            try {
+                const response = await fetch(`${backendUrl}/api/health`, {
+                    method: 'GET',
+                    mode: 'no-cors' // This bypasses CORS but we can't read the response
+                });
+                
+                showResult(resultId, 
+                    `Request sent (no-cors mode)\n\nNote: In no-cors mode, we can't read the response.\nIf you see this, the request was sent.\nCheck the backend window for logs.`, 
+                    true
+                );
+            } catch (error) {
+                showResult(resultId, 
+                    `❌ ERROR\n\nType: ${error.name}\nMessage: ${error.message}\n\nThis suggests a network-level issue.`, 
+                    false
+                );
+            }
+        }
+
+        // Auto-run health test on load
+        window.addEventListener('load', () => {
+            console.log('🔍 Backend Connection Test Page Loaded');
+            console.log('Hostname:', hostname);
+            console.log('Backend URL:', backendUrl);
+            console.log('Origin:', window.location.origin);
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+

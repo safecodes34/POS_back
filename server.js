@@ -92,31 +92,55 @@ const allowedOrigins = [
   'https://pos-front-topaz.vercel.app', // Current Vercel deployment
 ].filter(Boolean); // Remove undefined values
 
+// Helper function to check if origin is a local network IP
+const isLocalNetworkIP = (origin) => {
+  if (!origin) return false;
+  // Match IPv4 addresses in private ranges: 192.168.x.x, 10.x.x.x, 172.16-31.x.x
+  const ipPattern = /^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+):\d+$/;
+  return ipPattern.test(origin);
+};
+
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
+    // Log all CORS requests for debugging
+    console.log('🔍 CORS Request - Origin:', origin || '(no origin)', '| NODE_ENV:', process.env.NODE_ENV || 'development');
+    
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('✅ CORS: Allowing request with no origin');
+      return callback(null, true);
+    }
     
     // Normalize origin (remove trailing slash)
     const normalizedOrigin = origin.replace(/\/$/, '');
     
     // Check if origin is in allowed list (exact match)
     if (allowedOrigins.indexOf(normalizedOrigin) !== -1 || allowedOrigins.indexOf(origin) !== -1) {
+      console.log('✅ CORS: Allowing origin from allowed list:', origin);
       callback(null, true);
     } else if (origin && (origin.includes('vercel.app') || normalizedOrigin.includes('vercel.app'))) {
       // Allow all Vercel preview URLs (case-insensitive check)
       console.log('✅ CORS: Allowing Vercel origin:', origin);
       callback(null, true);
     } else {
-      // In development, allow localhost variations
-      if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
-        callback(null, true);
-      } else {
-        console.log('❌ CORS blocked origin:', origin);
-        console.log('✅ Allowed origins:', allowedOrigins);
-        callback(new Error('Not allowed by CORS'));
+      // In development, allow localhost variations and local network IPs
+      if (process.env.NODE_ENV !== 'production') {
+        const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+        const isNetworkIP = isLocalNetworkIP(origin);
+        
+        if (isLocalhost || isNetworkIP) {
+          console.log('✅ CORS: Allowing development origin:', origin);
+          console.log('   - Is localhost:', isLocalhost);
+          console.log('   - Is network IP:', isNetworkIP);
+          callback(null, true);
+          return;
+        }
       }
+      console.log('❌ CORS blocked origin:', origin);
+      console.log('   Allowed origins:', allowedOrigins);
+      console.log('   Is local network IP?', isLocalNetworkIP(origin));
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
@@ -191,6 +215,28 @@ app.use('/uploads', (req, res, next) => {
   
   next();
 }, express.static(uploadsDir));
+
+// Serve test connection page
+app.get('/test-connection', (req, res) => {
+  console.log('📄 Test connection page requested');
+  const testPagePath = path.join(__dirname, 'test-connection.html');
+  console.log('📄 Looking for file at:', testPagePath);
+  console.log('📄 File exists:', fs.existsSync(testPagePath));
+  
+  if (fs.existsSync(testPagePath)) {
+    res.sendFile(testPagePath, (err) => {
+      if (err) {
+        console.error('❌ Error sending test page:', err);
+        res.status(500).send('Error loading test page: ' + err.message);
+      } else {
+        console.log('✅ Test page sent successfully');
+      }
+    });
+  } else {
+    console.error('❌ Test page file not found at:', testPagePath);
+    res.status(404).send('Test page not found at: ' + testPagePath);
+  }
+});
 
 // Serve static HTML page for user logs UI
 app.get('/logs', (req, res) => {
@@ -2937,7 +2983,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 if (isProduction) {
   // Production: Use HTTP (Railway handles TLS termination)
-  http.createServer(app).listen(PORT, () => {
+  http.createServer(app).listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Backend HTTP server running on port ${PORT}`);
     console.log(`📝 Health check: /api/health`);
     console.log(`🔐 Auth endpoints:`);
@@ -2974,7 +3020,7 @@ if (isProduction) {
       cert: fs.readFileSync(path.join(__dirname, '../ssl/server.crt'))
     };
     
-    https.createServer(sslOptions, app).listen(PORT, () => {
+    https.createServer(sslOptions, app).listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Backend HTTPS server running on https://localhost:${PORT}`);
       console.log(`📝 Health check: https://localhost:${PORT}/api/health`);
       console.log(`🔐 Auth endpoints:`);
@@ -3006,7 +3052,7 @@ if (isProduction) {
   } catch (error) {
     console.error('❌ Error loading SSL certificates:', error.message);
     console.log('⚠️  Falling back to HTTP server...');
-    http.createServer(app).listen(PORT, () => {
+    http.createServer(app).listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Backend HTTP server running on http://localhost:${PORT} (SSL not available)`);
     });
   }
