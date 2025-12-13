@@ -318,6 +318,12 @@ app.get('/logs', (req, res) => {
     
     .filter-group select {
       cursor: pointer;
+      color: white !important;
+    }
+    
+    .filter-group select option {
+      background: #1e3a5f;
+      color: white;
     }
     
     .btn {
@@ -701,14 +707,14 @@ app.get('/logs', (req, res) => {
   res.send(html);
 });
 
-// Serve static HTML page for users UI
+// Serve static HTML page for comprehensive admin UI
 app.get('/users', (req, res) => {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Management - POS System</title>
+  <title>Admin Panel - POS System</title>
   <style>
     * {
       margin: 0;
@@ -720,135 +726,224 @@ app.get('/users', (req, res) => {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      padding: 2rem;
+      padding: 1rem;
     }
     
-    .container {
-      max-width: 1400px;
+    .admin-container {
+      display: flex;
+      max-width: 1800px;
       margin: 0 auto;
       background: white;
       border-radius: 16px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      min-height: calc(100vh - 2rem);
+    }
+    
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(180deg, #1e3a5f 0%, #2c5282 100%);
+      color: white;
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    
+    .sidebar h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .nav-section {
+      margin-bottom: 2rem;
+    }
+    
+    .nav-section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.7;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .nav-item {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .nav-item.active {
+      background: rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
     }
     
     .header {
       background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
       color: white;
-      padding: 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     }
     
     .header h1 {
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 600;
+      margin-bottom: 0.5rem;
     }
     
-    .controls {
-      display: flex;
+    .header-subtitle {
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+    
+    .content-area {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+      background: #f8f9fa;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .section-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1e3a5f;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .route-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1rem;
-      align-items: center;
+      margin-top: 1rem;
+    }
+    
+    .route-card {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1rem;
+      transition: all 0.2s;
+    }
+    
+    .route-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .route-method {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    
+    .method-get { background: #48bb78; color: white; }
+    .method-post { background: #4299e1; color: white; }
+    .method-put { background: #ed8936; color: white; }
+    .method-delete { background: #e53e3e; color: white; }
+    .method-options { background: #718096; color: white; }
+    
+    .route-path {
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #1e3a5f;
+      font-weight: 600;
+      margin: 0.5rem 0;
+    }
+    
+    .route-description {
+      font-size: 0.875rem;
+      color: #666;
+      margin-bottom: 0.75rem;
+    }
+    
+    .route-actions {
+      display: flex;
+      gap: 0.5rem;
       flex-wrap: wrap;
     }
     
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    .filter-group label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      opacity: 0.9;
-    }
-    
-    .filter-group input,
-    .filter-group select {
-      padding: 0.5rem 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      font-size: 0.9rem;
-    }
-    
-    .filter-group input::placeholder {
-      color: rgba(255, 255, 255, 0.6);
-    }
-    
-    .filter-group select {
-      cursor: pointer;
-    }
-    
     .btn {
-      padding: 0.5rem 1.5rem;
+      padding: 0.5rem 1rem;
       border: none;
-      border-radius: 8px;
-      font-size: 0.9rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
     }
     
-    .btn-primary {
-      background: white;
-      color: #1e3a5f;
-    }
-    
-    .btn-primary:hover {
-      background: #f0f0f0;
-      transform: translateY(-2px);
-    }
-    
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.2);
+    .btn-test {
+      background: #4299e1;
       color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.3);
+    .btn-test:hover {
+      background: #3182ce;
     }
     
-    .btn-link {
-      background: transparent;
+    .btn-view {
+      background: #48bb78;
       color: white;
-      text-decoration: underline;
-      padding: 0.5rem;
     }
     
-    .btn-link:hover {
-      opacity: 0.8;
+    .btn-view:hover {
+      background: #38a169;
     }
     
-    .btn-danger {
-      background: #e53e3e;
-      color: white;
-      border: none;
+    .btn-small {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.8rem;
     }
     
-    .btn-danger:hover {
-      background: #c53030;
-      transform: translateY(-2px);
-    }
-    
+    /* User Management Styles */
     .stats {
-      display: flex;
-      gap: 1.5rem;
-      padding: 1.5rem 2rem;
-      background: #f8f9fa;
-      border-bottom: 1px solid #e0e0e0;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
     
     .stat-card {
-      flex: 1;
-      min-width: 150px;
       background: white;
       padding: 1rem;
       border-radius: 8px;
@@ -867,10 +962,87 @@ app.get('/users', (req, res) => {
       color: #1e3a5f;
     }
     
-    .content {
-      padding: 2rem;
-      max-height: calc(100vh - 300px);
-      overflow-y: auto;
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    
+    .filter-group label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #666;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+      padding: 0.5rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: #1e3a5f;
+      background: white;
+    }
+    
+    .filter-group select option {
+      color: #1e3a5f;
+      background: white;
+    }
+    
+    .btn-primary {
+      background: #1e3a5f;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #2c5282;
+    }
+    
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #1e3a5f;
+    }
+    
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+    
+    .btn-danger {
+      background: #e53e3e;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #c53030;
+    }
+    
+    .view-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .view-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #e0e0e0;
+      background: white;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    
+    .view-btn.active {
+      background: #1e3a5f;
+      color: white;
+      border-color: #1e3a5f;
     }
     
     .user-entry {
@@ -879,12 +1051,32 @@ app.get('/users', (req, res) => {
       border-radius: 8px;
       padding: 1.5rem;
       margin-bottom: 1rem;
+      cursor: pointer;
       transition: all 0.2s;
+      position: relative;
+    }
+    
+    .user-entry::before {
+      content: '👆 Click to view profile';
+      position: absolute;
+      top: 0.5rem;
+      right: 1rem;
+      font-size: 0.75rem;
+      color: #667eea;
+      opacity: 0;
+      transition: opacity 0.2s;
+      font-weight: 500;
     }
     
     .user-entry:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       transform: translateX(4px);
+      background: #ffffff;
+      border-left-width: 6px;
+    }
+    
+    .user-entry:hover::before {
+      opacity: 1;
     }
     
     .user-header {
@@ -913,74 +1105,172 @@ app.get('/users', (req, res) => {
       font-size: 1.1rem;
     }
     
-    .user-timestamp {
-      color: #666;
-      font-size: 0.875rem;
+    /* User Detail View Styles */
+    .user-detail-view {
+      display: none;
     }
     
-    .user-info {
+    .user-detail-view.active {
+      display: block;
+    }
+    
+    .user-detail-header {
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+    }
+    
+    .user-detail-header h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .back-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .category-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.5rem;
+    }
+    
+    .category-tab {
+      padding: 0.75rem 1.5rem;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #1e3a5f;
+      transition: all 0.2s;
+    }
+    
+    .category-tab:hover {
+      background: #f8f9fa;
+    }
+    
+    .category-tab.active {
+      background: #1e3a5f;
+      color: white;
+      border-color: #1e3a5f;
+    }
+    
+    /* Ensure all select elements have readable text */
+    select {
+      color: #1e3a5f !important;
+    }
+    
+    select option {
+      color: #1e3a5f !important;
+      background: white !important;
+    }
+    
+    /* For selects on dark backgrounds (header), keep white text */
+    .header select,
+    .header select option {
+      color: white !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .category-content {
+      display: none;
+    }
+    
+    .category-content.active {
+      display: block;
+    }
+    
+    .route-item {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .route-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .route-item-method {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    
+    .route-item-path {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      color: #1e3a5f;
+      font-size: 1rem;
+    }
+    
+    .route-item-description {
+      color: #666;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    
+    .route-item-data {
       background: white;
       border-radius: 8px;
       padding: 1rem;
       margin-top: 1rem;
+      max-height: 400px;
+      overflow-y: auto;
     }
     
-    .user-info-item {
+    .data-item {
       display: flex;
       justify-content: space-between;
       padding: 0.5rem 0;
       border-bottom: 1px solid #e0e0e0;
     }
     
-    .user-info-item:last-child {
+    .data-item:last-child {
       border-bottom: none;
     }
     
-    .user-info-label {
+    .data-label {
       font-weight: 600;
       color: #666;
       min-width: 150px;
     }
     
-    .user-info-value {
+    .data-value {
       color: #1e3a5f;
       word-break: break-word;
       text-align: right;
       flex: 1;
-    }
-    
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #666;
-    }
-    
-    .empty-state svg {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 1rem;
-      opacity: 0.5;
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #666;
-    }
-    
-    .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #667eea;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1rem;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
     }
     
     .table-view {
@@ -1020,102 +1310,585 @@ app.get('/users', (req, res) => {
       background: #f8f9fa;
     }
     
-    .view-toggle {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
+    .loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #666;
     }
     
-    .view-btn {
-      padding: 0.5rem 1rem;
-      border: 1px solid #e0e0e0;
-      background: white;
-      cursor: pointer;
-      border-radius: 8px;
-      font-size: 0.875rem;
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
     }
     
-    .view-btn.active {
-      background: #1e3a5f;
-      color: white;
-      border-color: #1e3a5f;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #666;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>👥 User Management</h1>
-      <div class="controls">
-        <div class="filter-group">
-          <label>Email Filter</label>
-          <input type="text" id="emailFilter" placeholder="Search by email...">
-        </div>
-        <div class="filter-group">
-          <label>Limit</label>
-          <select id="limitFilter">
-            <option value="">All</option>
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" onclick="loadUsers()">Refresh</button>
-        <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
-        <a href="/logs" class="btn btn-link">View Activity Logs</a>
-      </div>
-    </div>
-    
-    <div class="stats" id="stats">
-      <div class="stat-card">
-        <div class="stat-label">Total Users</div>
-        <div class="stat-value" id="totalUsers">-</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">New This Week</div>
-        <div class="stat-value" id="newThisWeek">-</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">New This Month</div>
-        <div class="stat-value" id="newThisMonth">-</div>
-      </div>
-    </div>
-    
-    <div class="content">
-      <div class="view-toggle">
-        <button class="view-btn active" onclick="setView('card')">Card View</button>
-        <button class="view-btn" onclick="setView('table')">Table View</button>
+  <div class="admin-container">
+    <div class="sidebar">
+      <h2>🔧 Admin Panel</h2>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <a class="nav-item active" onclick="showTab('users')">👥 User Management</a>
+        <a class="nav-item" onclick="showTab('logs')">📋 Activity Logs</a>
       </div>
       
-      <div id="cardView">
-        <div id="content">
-          <div class="loading">
-            <div class="spinner"></div>
-            <p>Loading users...</p>
+      <div class="nav-section">
+        <div class="nav-section-title">API Routes</div>
+        <a class="nav-item" onclick="showTab('health')">💚 Health & System</a>
+        <a class="nav-item" onclick="showTab('auth')">🔐 Authentication</a>
+        <a class="nav-item" onclick="showTab('products')">📦 Products</a>
+        <a class="nav-item" onclick="showTab('transactions')">💳 Transactions</a>
+        <a class="nav-item" onclick="showTab('categories')">📁 Categories</a>
+        <a class="nav-item" onclick="showTab('team')">👥 Team Members</a>
+        <a class="nav-item" onclick="showTab('menu')">📄 Menu Analysis</a>
+        <a class="nav-item" onclick="showTab('stripe')">💳 Stripe Terminal</a>
+        <a class="nav-item" onclick="showTab('subscription')">💳 Subscriptions</a>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Links</div>
+        <a href="/logs" class="nav-item" target="_blank">📋 Logs Page</a>
+        <a href="/test-connection" class="nav-item" target="_blank">🧪 Test Connection</a>
+        <a href="/api/health" class="nav-item" target="_blank">💚 Health Check</a>
+      </div>
+    </div>
+    
+    <div class="main-content">
+      <div class="header">
+        <h1 id="pageTitle">👥 User Management</h1>
+        <div class="header-subtitle" id="pageSubtitle">Manage users, view stats, and access all backend routes</div>
+      </div>
+      
+      <div class="content-area">
+        <!-- User Management Tab -->
+        <div id="tab-users" class="tab-content active">
+          <!-- User List View -->
+          <div id="userListView">
+            <div class="controls">
+              <div class="filter-group">
+                <label>Email Filter</label>
+                <input type="text" id="emailFilter" placeholder="Search by email...">
+              </div>
+              <div class="filter-group">
+                <label>Limit</label>
+                <select id="limitFilter">
+                  <option value="">All</option>
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="loadUsers()">Refresh</button>
+              <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+            </div>
+            
+            <div class="stats" id="stats">
+              <div class="stat-card">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value" id="totalUsers">-</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">New This Week</div>
+                <div class="stat-value" id="newThisWeek">-</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">New This Month</div>
+                <div class="stat-value" id="newThisMonth">-</div>
+              </div>
+            </div>
+            
+            <div class="view-toggle">
+              <button class="view-btn active" onclick="setView('card')">Card View</button>
+              <button class="view-btn" onclick="setView('table')">Table View</button>
+            </div>
+            
+            <div id="cardView">
+              <div id="content">
+                <div class="loading">
+                  <div class="spinner"></div>
+                  <p>Loading users...</p>
+                </div>
+              </div>
+            </div>
+            
+            <div id="tableView" class="table-view">
+              <table id="usersTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Created At</th>
+                    <th>Days Since Signup</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- User Detail View -->
+          <div id="userDetailView" class="user-detail-view">
+            <button class="back-btn" onclick="backToUserList()">← Back to Users</button>
+            
+            <div class="user-detail-header" id="userDetailHeader">
+              <h2 id="userDetailTitle">👤 User Profile</h2>
+              <div id="userDetailInfo"></div>
+            </div>
+            
+            <div class="category-tabs" id="categoryTabs"></div>
+            
+            <div id="categoryContents"></div>
           </div>
         </div>
-      </div>
-      
-      <div id="tableView" class="table-view">
-        <table id="usersTable">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Email</th>
-              <th>Created At</th>
-              <th>Days Since Signup</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-          </tbody>
-        </table>
+        
+        <!-- Activity Logs Tab -->
+        <div id="tab-logs" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">📋 Activity Logs Routes</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/user-logs</div>
+                <div class="route-description">Get user activity logs with optional filters (email, type, limit)</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/user-logs?limit=10')">Test</button>
+                  <a href="/logs" class="btn btn-view btn-small" target="_blank">View Page</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Health & System Tab -->
+        <div id="tab-health" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">💚 Health & System Routes</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/health</div>
+                <div class="route-description">Health check endpoint</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/health')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/test</div>
+                <div class="route-description">Simple test endpoint</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/test')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/admin/reload-users</div>
+                <div class="route-description">Reload users from file</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('POST', '/api/admin/reload-users')">Test</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Authentication Tab -->
+        <div id="tab-auth" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">🔐 Authentication Routes</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/auth/signup</div>
+                <div class="route-description">Create new user account. Body: { email, password }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use the test form or API client to test signup')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/auth/login</div>
+                <div class="route-description">User login. Body: { email, password }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use the test form or API client to test login')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/auth/user</div>
+                <div class="route-description">Get user by email. Query: ?email=user@example.com</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/auth/user?email=test@example.com')">Test</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section-card">
+            <div class="section-title">⚙️ User Settings Routes</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/user/settings</div>
+                <div class="route-description">Get user settings. Query: ?email=user@example.com</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/user/settings?email=test@example.com')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/user/settings</div>
+                <div class="route-description">Save user settings. Body: { email, settings }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use API client to test with settings object')">Info</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Products Tab -->
+        <div id="tab-products" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">📦 Product Routes (All require userEmail)</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/products</div>
+                <div class="route-description">Get all products. Query: ?userEmail=user@example.com</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/products?userEmail=test@example.com')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/products/:id</div>
+                <div class="route-description">Get single product. Query: ?userEmail=user@example.com</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/products/1?userEmail=test@example.com')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/products</div>
+                <div class="route-description">Create product (FormData with image). Requires: name, price, userEmail</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use FormData with: name, price, userEmail, image (optional)')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-put">PUT</span>
+                <div class="route-path">/api/products/:id</div>
+                <div class="route-description">Update product (FormData). Requires: userEmail</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use FormData to update product')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-delete">DELETE</span>
+                <div class="route-path">/api/products/:id</div>
+                <div class="route-description">Delete product. Query: ?userEmail=user@example.com</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('DELETE', '/api/products/1?userEmail=test@example.com')">Test</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Transactions Tab -->
+        <div id="tab-transactions" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">💳 Transaction Routes</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/transactions</div>
+                <div class="route-description">Get transactions. Query: ?userEmail=user@example.com</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/transactions?userEmail=test@example.com')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/transactions</div>
+                <div class="route-description">Create transaction. Body: { customerName, paymentMethod, items[], subtotal, tax, total, userEmail }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use API client with transaction object')">Info</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Categories Tab -->
+        <div id="tab-categories" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">📁 Category Routes (Require userEmail)</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/categories</div>
+                <div class="route-description">Get categories. Query: ?userEmail=user@example.com</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/categories?userEmail=test@example.com')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/categories</div>
+                <div class="route-description">Save categories. Body: { userEmail, categories[] }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use API client with categories array')">Info</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Team Members Tab -->
+        <div id="tab-team" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">👥 Team Members Routes (Require userEmail)</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/team-members</div>
+                <div class="route-description">Get team members. Query: ?userEmail=user@example.com</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/team-members?userEmail=test@example.com')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/team-members</div>
+                <div class="route-description">Save team members. Body: { userEmail, teamMembers[] }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use API client with teamMembers array')">Info</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Menu Analysis Tab -->
+        <div id="tab-menu" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">📄 Menu Analysis Routes</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/menu/analyze</div>
+                <div class="route-description">Upload and analyze menu (FormData with 'menu' file). Supports images and PDFs (10MB max)</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use FormData to upload menu file')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/menu/status/:jobId</div>
+                <div class="route-description">Get menu analysis job status</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/menu/status/job-1234567890')">Test</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stripe Terminal Tab -->
+        <div id="tab-stripe" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">💳 Stripe Terminal Routes</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/stripe-terminal/connection-token</div>
+                <div class="route-description">Create connection token for Stripe Terminal</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('POST', '/api/stripe-terminal/connection-token')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/stripe-terminal/create-payment-intent</div>
+                <div class="route-description">Create payment intent. Body: { amount, currency?, metadata? }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use API client with amount in dollars')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/stripe-terminal/process-payment</div>
+                <div class="route-description">Process payment on reader. Body: { payment_intent_id, reader_id }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Requires payment_intent_id and reader_id')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/stripe-terminal/capture-payment</div>
+                <div class="route-description">Capture payment intent. Body: { payment_intent_id }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Requires payment_intent_id')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/stripe-terminal/payment-intent/:id</div>
+                <div class="route-description">Get payment intent status</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/stripe-terminal/payment-intent/pi_test123')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/stripe-terminal/cancel-payment</div>
+                <div class="route-description">Cancel payment intent. Body: { payment_intent_id }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Requires payment_intent_id')">Info</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Subscriptions Tab -->
+        <div id="tab-subscription" class="tab-content">
+          <div class="section-card">
+            <div class="section-title">💳 Subscription Routes</div>
+            <div class="route-grid">
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/subscription/publishable-key</div>
+                <div class="route-description">Get Stripe publishable key</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/subscription/publishable-key')">Test</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/subscription/create-subscription</div>
+                <div class="route-description">Create Stripe Checkout session. Body: { email, discountCode? }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Creates checkout session with $99 setup + $30/month')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-post">POST</span>
+                <div class="route-path">/api/subscription/update-status</div>
+                <div class="route-description">Update subscription status. Body: { email, subscriptionStatus }</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="alert('Use API client with email and status')">Info</button>
+                </div>
+              </div>
+              <div class="route-card">
+                <span class="route-method method-get">GET</span>
+                <div class="route-path">/api/subscription/verify-session</div>
+                <div class="route-description">Verify Stripe checkout session. Query: ?session_id=xxx</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="testRoute('GET', '/api/subscription/verify-session?session_id=test')">Test</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
   
   <script>
+    // Tab Management
+    function showTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Remove active from all nav items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById('tab-' + tabName).classList.add('active');
+      
+      // Set active nav item
+      event.target.classList.add('active');
+      
+      // Update page title
+      const titles = {
+        'users': '👥 User Management',
+        'logs': '📋 Activity Logs',
+        'health': '💚 Health & System',
+        'auth': '🔐 Authentication',
+        'products': '📦 Products',
+        'transactions': '💳 Transactions',
+        'categories': '📁 Categories',
+        'team': '👥 Team Members',
+        'menu': '📄 Menu Analysis',
+        'stripe': '💳 Stripe Terminal',
+        'subscription': '💳 Subscriptions'
+      };
+      
+      const subtitles = {
+        'users': 'Manage users, view stats, and access all backend routes',
+        'logs': 'View and manage user activity logs',
+        'health': 'System health checks and admin endpoints',
+        'auth': 'Authentication and user settings endpoints',
+        'products': 'Product management endpoints (require userEmail)',
+        'transactions': 'Transaction management endpoints',
+        'categories': 'Category management endpoints (require userEmail)',
+        'team': 'Team member management endpoints (require userEmail)',
+        'menu': 'AI-powered menu analysis endpoints',
+        'stripe': 'Stripe Terminal payment processing endpoints',
+        'subscription': 'Stripe subscription management endpoints'
+      };
+      
+      document.getElementById('pageTitle').textContent = titles[tabName] || 'Admin Panel';
+      document.getElementById('pageSubtitle').textContent = subtitles[tabName] || '';
+    }
+    
+    // Test Route Function
+    async function testRoute(method, path) {
+      try {
+        const options = {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        };
+        
+        const response = await fetch(path, options);
+        const data = await response.json();
+        
+        const result = \`Method: \${method}\\nPath: \${path}\\nStatus: \${response.status} \${response.statusText}\\n\\nResponse:\\n\${JSON.stringify(data, null, 2)}\`;
+        alert(result);
+      } catch (error) {
+        alert(\`Error testing route:\\n\${method} \${path}\\n\\n\${error.message}\`);
+      }
+    }
+    
+    // User Management Functions
     let allUsers = [];
     let currentView = 'card';
     
@@ -1133,7 +1906,7 @@ app.get('/users', (req, res) => {
       if (currentView === 'card') {
         contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading users...</p></div>';
       } else {
-        tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem;"><div class="spinner"></div><p>Loading users...</p></td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;"><div class="spinner"></div><p>Loading users...</p></td></tr>';
       }
       
       try {
@@ -1146,7 +1919,7 @@ app.get('/users', (req, res) => {
         if (currentView === 'card') {
           contentDiv.innerHTML = '<div class="empty-state"><p>Error loading users: ' + error.message + '</p></div>';
         } else {
-          tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #d32f2f;">Error loading users: ' + error.message + '</td></tr>';
+          tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: #d32f2f;">Error loading users: ' + error.message + '</td></tr>';
         }
       }
     }
@@ -1163,18 +1936,7 @@ app.get('/users', (req, res) => {
       const contentDiv = document.getElementById('content');
       
       if (users.length === 0) {
-        contentDiv.innerHTML = \`
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-            <h2>No users found</h2>
-            <p>No users match your filters.</p>
-          </div>
-        \`;
+        contentDiv.innerHTML = '<div class="empty-state"><h2>No users found</h2><p>No users match your filters.</p></div>';
         return;
       }
       
@@ -1184,33 +1946,15 @@ app.get('/users', (req, res) => {
         const daysSince = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
         
         return \`
-          <div class="user-entry">
+          <div class="user-entry" onclick="viewUserDetail(\${user.id}, '\${user.email}')">
             <div class="user-header">
               <div>
                 <span class="user-id">ID: \${user.id}</span>
                 <span class="user-email">\${user.email}</span>
               </div>
               <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <span class="user-timestamp">\${formattedDate}</span>
-                <button class="btn btn-danger" onclick="deleteUser(\${user.id}, '\${user.email}')" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Delete</button>
-              </div>
-            </div>
-            <div class="user-info">
-              <div class="user-info-item">
-                <span class="user-info-label">User ID:</span>
-                <span class="user-info-value">\${user.id}</span>
-              </div>
-              <div class="user-info-item">
-                <span class="user-info-label">Email:</span>
-                <span class="user-info-value">\${user.email}</span>
-              </div>
-              <div class="user-info-item">
-                <span class="user-info-label">Created At:</span>
-                <span class="user-info-value">\${formattedDate}</span>
-              </div>
-              <div class="user-info-item">
-                <span class="user-info-label">Days Since Signup:</span>
-                <span class="user-info-value">\${daysSince} day\${daysSince !== 1 ? 's' : ''}</span>
+                <span style="color: #666; font-size: 0.875rem;">\${formattedDate}</span>
+                <button class="btn btn-danger" onclick="event.stopPropagation(); deleteUser(\${user.id}, '\${user.email}')" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Delete</button>
               </div>
             </div>
           </div>
@@ -1232,13 +1976,13 @@ app.get('/users', (req, res) => {
         const daysSince = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
         
         return \`
-          <tr>
+          <tr style="cursor: pointer;" onclick="viewUserDetail(\${user.id}, '\${user.email}')" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background=''">
             <td>\${user.id}</td>
             <td>\${user.email}</td>
             <td>\${formattedDate}</td>
             <td>\${daysSince} day\${daysSince !== 1 ? 's' : ''}</td>
             <td>
-              <button class="btn btn-danger" onclick="deleteUser(\${user.id}, '\${user.email}')" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Delete</button>
+              <button class="btn btn-danger" onclick="event.stopPropagation(); deleteUser(\${user.id}, '\${user.email}')" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Delete</button>
             </td>
           </tr>
         \`;
@@ -1276,28 +2020,6 @@ app.get('/users', (req, res) => {
       displayUsers(allUsers);
     }
     
-    // Auto-refresh every 30 seconds
-    setInterval(loadUsers, 30000);
-    
-    // Load users on page load
-    loadUsers();
-    
-    // Add event listeners for filters
-    document.getElementById('emailFilter').addEventListener('input', debounce(loadUsers, 500));
-    document.getElementById('limitFilter').addEventListener('change', loadUsers);
-    
-    function debounce(func, wait) {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
-    }
-    
     async function deleteUser(userId, userEmail) {
       if (!confirm(\`Are you sure you want to delete the account for \${userEmail}? This action cannot be undone.\`)) {
         return;
@@ -1314,12 +2036,824 @@ app.get('/users', (req, res) => {
         }
         
         alert('User account deleted successfully');
-        loadUsers(); // Refresh the list
+        loadUsers();
       } catch (error) {
         alert('Error deleting user: ' + error.message);
         console.error('Delete user error:', error);
       }
     }
+    
+    // User Detail View Functions
+    let currentUser = null;
+    
+    async function viewUserDetail(userId, userEmail) {
+      try {
+        console.log('Viewing user detail:', userId, userEmail);
+        currentUser = { id: userId, email: userEmail };
+        
+        // Hide user list, show detail view
+        const listView = document.getElementById('userListView');
+        const detailView = document.getElementById('userDetailView');
+        
+        if (!listView || !detailView) {
+          console.error('Could not find listView or detailView elements');
+          alert('Error: Could not load user detail view');
+          return;
+        }
+        
+        listView.style.display = 'none';
+        detailView.classList.add('active');
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+        
+        // Load user info
+        await loadUserDetailInfo(userEmail);
+        
+        // Setup category tabs and content
+        setupCategoryTabs();
+        
+        // Activate first tab and content after a brief delay to ensure DOM is ready
+        setTimeout(() => {
+          const firstTab = document.querySelector('.category-tab');
+          const firstContent = document.getElementById('category-overview');
+          if (firstTab) {
+            firstTab.classList.add('active');
+          }
+          if (firstContent) {
+            firstContent.classList.add('active');
+          }
+          // Load overview data
+          loadCategoryData('overview');
+        }, 150);
+      } catch (error) {
+        console.error('Error in viewUserDetail:', error);
+        alert('Error loading user profile: ' + error.message);
+      }
+    }
+    
+    function backToUserList() {
+      document.getElementById('userListView').style.display = 'block';
+      document.getElementById('userDetailView').classList.remove('active');
+      currentUser = null;
+    }
+    
+    async function loadUserDetailInfo(userEmail) {
+      try {
+        const [userResponse, settingsResponse, logsResponse] = await Promise.all([
+          fetch(\`/api/auth/user?email=\${encodeURIComponent(userEmail)}\`),
+          fetch(\`/api/user/settings?email=\${encodeURIComponent(userEmail)}\`),
+          fetch(\`/api/user-logs?email=\${encodeURIComponent(userEmail)}&limit=1\`)
+        ]);
+        
+        const user = await userResponse.json();
+        const settings = settingsResponse.ok ? await settingsResponse.json() : null;
+        const logs = logsResponse.ok ? await logsResponse.json() : [];
+        
+        const date = new Date(user.createdAt);
+        const formattedDate = date.toLocaleString();
+        const daysSince = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
+        
+        // Check if TOS was agreed (look for signup log)
+        const hasSignupLog = logs.some(log => log.type === 'signup');
+        const subscriptionStatus = user.subscriptionStatus || 'pending';
+        const subscriptionBadge = subscriptionStatus === 'active' ? '✅ Active' : subscriptionStatus === 'pending' ? '⏳ Pending' : '❌ Inactive';
+        
+        document.getElementById('userDetailTitle').textContent = \`👤 \${user.email}\`;
+        document.getElementById('userDetailInfo').innerHTML = \`
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 8px;">
+              <div style="font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">User ID</div>
+              <div style="font-size: 1.5rem; font-weight: 600; margin-top: 0.5rem;">#\${user.id}</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 8px;">
+              <div style="font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">Subscription</div>
+              <div style="font-size: 1.5rem; font-weight: 600; margin-top: 0.5rem;">\${subscriptionBadge}</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 8px;">
+              <div style="font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">TOS Agreed</div>
+              <div style="font-size: 1.5rem; font-weight: 600; margin-top: 0.5rem;">\${hasSignupLog ? '✅ Yes' : '❌ No'}</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 8px;">
+              <div style="font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">Member Since</div>
+              <div style="font-size: 1.5rem; font-weight: 600; margin-top: 0.5rem;">\${daysSince} days</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 8px;">
+              <div style="font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">Created</div>
+              <div style="font-size: 0.875rem; font-weight: 500; margin-top: 0.5rem;">\${formattedDate}</div>
+            </div>
+          </div>
+        \`;
+        
+        // Store user data globally for use in other functions
+        window.currentUserData = { user, settings, logs };
+      } catch (error) {
+        console.error('Error loading user info:', error);
+        document.getElementById('userDetailInfo').innerHTML = \`<div style="color: #e53e3e; padding: 1rem;">Error loading user info: \${error.message}</div>\`;
+      }
+    }
+    
+    function setupCategoryTabs() {
+      const categories = [
+        { id: 'overview', label: '📋 Overview', icon: '📋' },
+        { id: 'products', label: '📦 Products', icon: '📦' },
+        { id: 'transactions', label: '💳 Transactions', icon: '💳' },
+        { id: 'categories', label: '📁 Categories', icon: '📁' },
+        { id: 'team', label: '👥 Team Members', icon: '👥' },
+        { id: 'settings', label: '⚙️ Settings', icon: '⚙️' },
+        { id: 'logs', label: '📋 Activity Logs', icon: '📋' },
+        { id: 'routes', label: '🔗 All Routes', icon: '🔗' }
+      ];
+      
+      const tabsContainer = document.getElementById('categoryTabs');
+      const contentContainer = document.getElementById('categoryContents');
+      
+      tabsContainer.innerHTML = categories.map(cat => 
+        \`<button class="category-tab" onclick="showCategory('\${cat.id}'); this.classList.add('active');">\${cat.label}</button>\`
+      ).join('');
+      
+      contentContainer.innerHTML = categories.map(cat => 
+        \`<div id="category-\${cat.id}" class="category-content"><div class="loading"><div class="spinner"></div><p>Loading...</p></div></div>\`
+      ).join('');
+    }
+    
+    async function showCategory(categoryId) {
+      // Update active tab
+      document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Find and activate the clicked tab
+      let clickedTab = null;
+      if (typeof event !== 'undefined' && event.target) {
+        clickedTab = event.target;
+      }
+      
+      if (clickedTab && clickedTab.classList.contains('category-tab')) {
+        clickedTab.classList.add('active');
+      } else {
+        // Fallback: find tab by text content
+        document.querySelectorAll('.category-tab').forEach(tab => {
+          const tabText = tab.textContent.toLowerCase();
+          const categoryText = categoryId.toLowerCase();
+          if (tabText.includes(categoryText)) {
+            tab.classList.add('active');
+          }
+        });
+      }
+      
+      // Hide all category contents
+      document.querySelectorAll('.category-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Show selected category
+      const categoryContent = document.getElementById(\`category-\${categoryId}\`);
+      if (categoryContent) {
+        categoryContent.classList.add('active');
+        
+        // Load category data
+        await loadCategoryData(categoryId);
+      }
+    }
+    
+    function getCategoryLabel(categoryId) {
+      const labels = {
+        'overview': '📋 Overview',
+        'products': '📦 Products',
+        'transactions': '💳 Transactions',
+        'categories': '📁 Categories',
+        'team': '👥 Team Members',
+        'settings': '⚙️ Settings',
+        'logs': '📋 Activity Logs',
+        'routes': '🔗 All Routes'
+      };
+      return labels[categoryId] || categoryId;
+    }
+    
+    async function loadCategoryData(categoryId) {
+      const categoryContent = document.getElementById(\`category-\${categoryId}\`);
+      const userEmail = currentUser.email;
+      
+      try {
+        switch(categoryId) {
+          case 'overview':
+            await loadOverviewCategory(categoryContent, userEmail);
+            break;
+          case 'products':
+            await loadProductsCategory(categoryContent, userEmail);
+            break;
+          case 'transactions':
+            await loadTransactionsCategory(categoryContent, userEmail);
+            break;
+          case 'categories':
+            await loadCategoriesCategory(categoryContent, userEmail);
+            break;
+          case 'team':
+            await loadTeamCategory(categoryContent, userEmail);
+            break;
+          case 'settings':
+            await loadSettingsCategory(categoryContent, userEmail);
+            break;
+          case 'logs':
+            await loadLogsCategory(categoryContent, userEmail);
+            break;
+          case 'routes':
+            await loadRoutesCategory(categoryContent, userEmail);
+            break;
+        }
+      } catch (error) {
+        categoryContent.innerHTML = \`<div class="empty-state"><p>Error loading \${categoryId}: \${error.message}</p></div>\`;
+      }
+    }
+    
+    async function loadOverviewCategory(container, userEmail) {
+      try {
+        const userData = window.currentUserData || {};
+        const user = userData.user || {};
+        const settings = userData.settings || null;
+        
+        // Get additional data
+        const [productsRes, transactionsRes, categoriesRes, teamRes, logsRes] = await Promise.all([
+          fetch(\`/api/products?userEmail=\${encodeURIComponent(userEmail)}\`).catch(() => ({ ok: false })),
+          fetch(\`/api/transactions?userEmail=\${encodeURIComponent(userEmail)}\`).catch(() => ({ ok: false })),
+          fetch(\`/api/categories?userEmail=\${encodeURIComponent(userEmail)}\`).catch(() => ({ ok: false })),
+          fetch(\`/api/team-members?userEmail=\${encodeURIComponent(userEmail)}\`).catch(() => ({ ok: false })),
+          fetch(\`/api/user-logs?email=\${encodeURIComponent(userEmail)}&limit=5\`).catch(() => ({ ok: false }))
+        ]);
+        
+        const products = productsRes.ok ? await productsRes.json() : [];
+        const transactions = transactionsRes.ok ? await transactionsRes.json() : [];
+        const categories = categoriesRes.ok ? await categoriesRes.json() : [];
+        const teamMembers = teamRes.ok ? await teamRes.json() : [];
+        const logs = logsRes.ok ? await logsRes.json() : [];
+        
+        const subscriptionStatus = user.subscriptionStatus || 'pending';
+        const hasTOS = logs.some(log => log.type === 'signup');
+        
+        container.innerHTML = \`
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <!-- Account Information -->
+            <div class="section-card">
+              <div class="section-title">👤 Account Information</div>
+              <div class="route-item-data">
+                <div class="data-item">
+                  <span class="data-label">Email:</span>
+                  <span class="data-value">\${user.email || 'N/A'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">User ID:</span>
+                  <span class="data-value">#\${user.id || 'N/A'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Created:</span>
+                  <span class="data-value">\${user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Subscription:</span>
+                  <span class="data-value">
+                    <span style="padding: 0.25rem 0.5rem; border-radius: 4px; background: \${subscriptionStatus === 'active' ? '#c6f6d5' : subscriptionStatus === 'pending' ? '#fed7aa' : '#fed7d7'}; color: \${subscriptionStatus === 'active' ? '#22543d' : subscriptionStatus === 'pending' ? '#7c2d12' : '#742a2a'};">
+                      \${subscriptionStatus.toUpperCase()}
+                    </span>
+                  </span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">TOS Agreed:</span>
+                  <span class="data-value">\${hasTOS ? '✅ Yes' : '❌ No'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Stripe Customer ID:</span>
+                  <span class="data-value" style="font-family: monospace; font-size: 0.875rem;">\${user.stripeCustomerId || 'Not set'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Stripe Subscription ID:</span>
+                  <span class="data-value" style="font-family: monospace; font-size: 0.875rem;">\${user.stripeSubscriptionId || 'Not set'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Business Information -->
+            <div class="section-card">
+              <div class="section-title">🏢 Business Information</div>
+              <div class="route-item-data">
+                <div class="data-item">
+                  <span class="data-label">Owner Name:</span>
+                  <span class="data-value">\${settings?.ownerName || 'Not provided'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Manager Name:</span>
+                  <span class="data-value">\${settings?.managerName || 'Not provided'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Location:</span>
+                  <span class="data-value">\${settings?.location || 'Not provided'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Account Email:</span>
+                  <span class="data-value">\${settings?.accountEmail || 'Not provided'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Account Password:</span>
+                  <span class="data-value">\${settings?.accountPassword ? '🔒 Set' : 'Not set'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Payment Information -->
+            <div class="section-card">
+              <div class="section-title">💳 Payment Information</div>
+              <div class="route-item-data">
+                <div class="data-item">
+                  <span class="data-label">Cardholder Name:</span>
+                  <span class="data-value">\${settings?.cardholderName || 'Not provided'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Card Number:</span>
+                  <span class="data-value" style="font-family: monospace;">\${settings?.cardNumber ? settings.cardNumber.replace(/\d(?=\d{4})/g, '*') : 'Not provided'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Card Expiry:</span>
+                  <span class="data-value">\${settings?.cardExpiry || 'Not provided'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Card CVC:</span>
+                  <span class="data-value">\${settings?.cardCVC ? '🔒 Set' : 'Not set'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Statistics -->
+            <div class="section-card">
+              <div class="section-title">📊 Statistics</div>
+              <div class="route-item-data">
+                <div class="data-item">
+                  <span class="data-label">Products:</span>
+                  <span class="data-value" style="font-size: 1.25rem; font-weight: 600; color: #1e3a5f;">\${products.length}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Transactions:</span>
+                  <span class="data-value" style="font-size: 1.25rem; font-weight: 600; color: #1e3a5f;">\${transactions.length}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Categories:</span>
+                  <span class="data-value" style="font-size: 1.25rem; font-weight: 600; color: #1e3a5f;">\${categories.length}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Team Members:</span>
+                  <span class="data-value" style="font-size: 1.25rem; font-weight: 600; color: #1e3a5f;">\${teamMembers.length}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Activity Logs:</span>
+                  <span class="data-value" style="font-size: 1.25rem; font-weight: 600; color: #1e3a5f;">\${logs.length}+</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quick Actions -->
+          <div class="section-card" style="margin-top: 1.5rem;">
+            <div class="section-title">⚡ Quick Actions</div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button class="btn btn-primary" onclick="showCategory('settings')">View Full Settings</button>
+              <button class="btn btn-primary" onclick="showCategory('products')">View Products</button>
+              <button class="btn btn-primary" onclick="showCategory('transactions')">View Transactions</button>
+              <button class="btn btn-primary" onclick="showCategory('logs')">View Activity Logs</button>
+              <a href="/logs?email=\${encodeURIComponent(userEmail)}" class="btn btn-view" target="_blank">Open Logs Page</a>
+            </div>
+          </div>
+        \`;
+      } catch (error) {
+        container.innerHTML = \`<div class="empty-state"><p>Error loading overview: \${error.message}</p></div>\`;
+      }
+    }
+    
+    async function loadProductsCategory(container, userEmail) {
+      const routes = [
+        { method: 'GET', path: '/api/products', description: 'Get all products for user', query: \`?userEmail=\${encodeURIComponent(userEmail)}\` },
+        { method: 'GET', path: '/api/products/:id', description: 'Get single product', query: \`?userEmail=\${encodeURIComponent(userEmail)}\` },
+        { method: 'POST', path: '/api/products', description: 'Create product (FormData with image)', query: '' },
+        { method: 'PUT', path: '/api/products/:id', description: 'Update product (FormData)', query: '' },
+        { method: 'DELETE', path: '/api/products/:id', description: 'Delete product', query: \`?userEmail=\${encodeURIComponent(userEmail)}\` }
+      ];
+      
+      try {
+        const response = await fetch(\`/api/products?userEmail=\${encodeURIComponent(userEmail)}\`);
+        const products = await response.json();
+        
+        container.innerHTML = \`
+          <div class="section-card">
+            <div class="section-title">📦 Product Routes</div>
+            <div class="route-grid">
+              \${routes.map(route => \`
+                <div class="route-card">
+                  <span class="route-method method-\${route.method.toLowerCase()}">\${route.method}</span>
+                  <div class="route-path">\${route.path}</div>
+                  <div class="route-description">\${route.description}</div>
+                  <div class="route-actions">
+                    <button class="btn btn-test btn-small" onclick="\${route.method === 'GET' && route.query ? \`testRoute('\${route.method}', '\${route.path}\${route.query}')\` : \"alert('Use API client or FormData for this endpoint')\"}">\${route.method === 'GET' && route.query ? 'Test' : 'Info'}</button>
+                  </div>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">User Products (\${products.length})</div>
+            <div class="route-item-data">
+              \${products.length === 0 ? '<p style="text-align: center; color: #666; padding: 2rem;">No products found</p>' : products.map(p => \`
+                <div class="data-item">
+                  <span class="data-label">\${p.name}</span>
+                  <span class="data-value">$\${p.price.toFixed(2)}</span>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+        \`;
+      } catch (error) {
+        container.innerHTML = \`<div class="empty-state"><p>Error loading products: \${error.message}</p></div>\`;
+      }
+    }
+    
+    async function loadTransactionsCategory(container, userEmail) {
+      const routes = [
+        { method: 'GET', path: '/api/transactions', description: 'Get all transactions for user', query: \`?userEmail=\${encodeURIComponent(userEmail)}\` },
+        { method: 'POST', path: '/api/transactions', description: 'Create new transaction', query: '' }
+      ];
+      
+      try {
+        const response = await fetch(\`/api/transactions?userEmail=\${encodeURIComponent(userEmail)}\`);
+        const transactions = await response.json();
+        
+        container.innerHTML = \`
+          <div class="section-card">
+            <div class="section-title">💳 Transaction Routes</div>
+            <div class="route-grid">
+              \${routes.map(route => \`
+                <div class="route-card">
+                  <span class="route-method method-\${route.method.toLowerCase()}">\${route.method}</span>
+                  <div class="route-path">\${route.path}</div>
+                  <div class="route-description">\${route.description}</div>
+                  <div class="route-actions">
+                    <button class="btn btn-test btn-small" onclick="\${route.method === 'GET' ? \`testRoute('\${route.method}', '\${route.path}\${route.query}')\` : \"alert('Use API client with transaction object')\"}">\${route.method === 'GET' ? 'Test' : 'Info'}</button>
+                  </div>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">User Transactions (\${transactions.length})</div>
+            <div class="route-item-data">
+              \${transactions.length === 0 ? '<p style="text-align: center; color: #666; padding: 2rem;">No transactions found</p>' : transactions.slice(0, 10).map(t => \`
+                <div class="data-item">
+                  <span class="data-label">\${t.customerName} - \${new Date(t.timestamp).toLocaleString()}</span>
+                  <span class="data-value">$\${t.total.toFixed(2)}</span>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+        \`;
+      } catch (error) {
+        container.innerHTML = \`<div class="empty-state"><p>Error loading transactions: \${error.message}</p></div>\`;
+      }
+    }
+    
+    async function loadCategoriesCategory(container, userEmail) {
+      const routes = [
+        { method: 'GET', path: '/api/categories', description: 'Get categories for user', query: \`?userEmail=\${encodeURIComponent(userEmail)}\` },
+        { method: 'POST', path: '/api/categories', description: 'Save categories for user', query: '' }
+      ];
+      
+      try {
+        const response = await fetch(\`/api/categories?userEmail=\${encodeURIComponent(userEmail)}\`);
+        const categories = await response.json();
+        
+        container.innerHTML = \`
+          <div class="section-card">
+            <div class="section-title">📁 Category Routes</div>
+            <div class="route-grid">
+              \${routes.map(route => \`
+                <div class="route-card">
+                  <span class="route-method method-\${route.method.toLowerCase()}">\${route.method}</span>
+                  <div class="route-path">\${route.path}</div>
+                  <div class="route-description">\${route.description}</div>
+                  <div class="route-actions">
+                    <button class="btn btn-test btn-small" onclick="\${route.method === 'GET' ? \`testRoute('\${route.method}', '\${route.path}\${route.query}')\` : \"alert('Use API client with categories array')\"}">\${route.method === 'GET' ? 'Test' : 'Info'}</button>
+                  </div>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">User Categories (\${categories.length})</div>
+            <div class="route-item-data">
+              \${categories.map(cat => \`
+                <div class="data-item">
+                  <span class="data-label">\${cat}</span>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+        \`;
+      } catch (error) {
+        container.innerHTML = \`<div class="empty-state"><p>Error loading categories: \${error.message}</p></div>\`;
+      }
+    }
+    
+    async function loadTeamCategory(container, userEmail) {
+      const routes = [
+        { method: 'GET', path: '/api/team-members', description: 'Get team members for user', query: \`?userEmail=\${encodeURIComponent(userEmail)}\` },
+        { method: 'POST', path: '/api/team-members', description: 'Save team members for user', query: '' }
+      ];
+      
+      try {
+        const response = await fetch(\`/api/team-members?userEmail=\${encodeURIComponent(userEmail)}\`);
+        const teamMembers = await response.json();
+        
+        container.innerHTML = \`
+          <div class="section-card">
+            <div class="section-title">👥 Team Members Routes</div>
+            <div class="route-grid">
+              \${routes.map(route => \`
+                <div class="route-card">
+                  <span class="route-method method-\${route.method.toLowerCase()}">\${route.method}</span>
+                  <div class="route-path">\${route.path}</div>
+                  <div class="route-description">\${route.description}</div>
+                  <div class="route-actions">
+                    <button class="btn btn-test btn-small" onclick="\${route.method === 'GET' ? \`testRoute('\${route.method}', '\${route.path}\${route.query}')\` : \"alert('Use API client with teamMembers array')\"}">\${route.method === 'GET' ? 'Test' : 'Info'}</button>
+                  </div>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">Team Members (\${teamMembers.length})</div>
+            <div class="route-item-data">
+              \${teamMembers.length === 0 ? '<p style="text-align: center; color: #666; padding: 2rem;">No team members found</p>' : teamMembers.map(tm => \`
+                <div class="data-item">
+                  <span class="data-label">\${tm.name || 'Unnamed'}</span>
+                  <span class="data-value">\${tm.role || 'Member'}</span>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+        \`;
+      } catch (error) {
+        container.innerHTML = \`<div class="empty-state"><p>Error loading team members: \${error.message}</p></div>\`;
+      }
+    }
+    
+    async function loadSettingsCategory(container, userEmail) {
+      const routes = [
+        { method: 'GET', path: '/api/user/settings', description: 'Get user settings', query: \`?email=\${encodeURIComponent(userEmail)}\` },
+        { method: 'POST', path: '/api/user/settings', description: 'Save user settings', query: '' }
+      ];
+      
+      try {
+        const response = await fetch(\`/api/user/settings?email=\${encodeURIComponent(userEmail)}\`);
+        const settings = response.ok ? await response.json() : null;
+        
+        container.innerHTML = \`
+          <div class="section-card">
+            <div class="section-title">⚙️ User Settings Routes</div>
+            <div class="route-grid">
+              \${routes.map(route => \`
+                <div class="route-card">
+                  <span class="route-method method-\${route.method.toLowerCase()}">\${route.method}</span>
+                  <div class="route-path">\${route.path}</div>
+                  <div class="route-description">\${route.description}</div>
+                  <div class="route-actions">
+                    <button class="btn btn-test btn-small" onclick="\${route.method === 'GET' ? \`testRoute('\${route.method}', '\${route.path}\${route.query}')\` : \"alert('Use API client with settings object')\"}">\${route.method === 'GET' ? 'Test' : 'Info'}</button>
+                  </div>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+          \${!settings ? \`
+          <div class="section-card">
+            <div class="section-title">Current Settings</div>
+            <div style="text-align: center; padding: 3rem; color: #666;">
+              <p style="font-size: 1.125rem; margin-bottom: 1rem;">No settings found for this user</p>
+              <p style="color: #999;">Settings will appear here once the user completes their profile setup.</p>
+            </div>
+          </div>
+          \` : \`
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+            <!-- Business Information -->
+            <div class="section-card">
+              <div class="section-title">🏢 Business Information</div>
+              <div class="route-item-data">
+                <div class="data-item">
+                  <span class="data-label">Owner Name:</span>
+                  <span class="data-value">\${settings.ownerName || '<span style="color: #999; font-style: italic;">Not provided</span>'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Manager Name:</span>
+                  <span class="data-value">\${settings.managerName || '<span style="color: #999; font-style: italic;">Not provided</span>'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Location:</span>
+                  <span class="data-value">\${settings.location || '<span style="color: #999; font-style: italic;">Not provided</span>'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Account Email:</span>
+                  <span class="data-value">\${settings.accountEmail || '<span style="color: #999; font-style: italic;">Not provided</span>'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Account Password:</span>
+                  <span class="data-value">\${settings.accountPassword ? '🔒 Password is set' : '<span style="color: #999; font-style: italic;">Not set</span>'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Payment Information -->
+            <div class="section-card">
+              <div class="section-title">💳 Payment Information</div>
+              <div class="route-item-data">
+                <div class="data-item">
+                  <span class="data-label">Cardholder Name:</span>
+                  <span class="data-value">\${settings.cardholderName || '<span style="color: #999; font-style: italic;">Not provided</span>'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Card Number:</span>
+                  <span class="data-value" style="font-family: monospace;">\${settings.cardNumber ? settings.cardNumber.replace(/\\d(?=\\d{4})/g, '*') : '<span style="color: #999; font-style: italic;">Not provided</span>'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Card Expiry:</span>
+                  <span class="data-value">\${settings.cardExpiry || '<span style="color: #999; font-style: italic;">Not provided</span>'}</span>
+                </div>
+                <div class="data-item">
+                  <span class="data-label">Card CVC:</span>
+                  <span class="data-value">\${settings.cardCVC ? '🔒 CVC is set' : '<span style="color: #999; font-style: italic;">Not set</span>'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Metadata -->
+            <div class="section-card">
+              <div class="section-title">📋 Metadata</div>
+              <div class="route-item-data">
+                <div class="data-item">
+                  <span class="data-label">Last Updated:</span>
+                  <span class="data-value">\${settings.updatedAt ? new Date(settings.updatedAt).toLocaleString() : 'Never'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Raw Settings -->
+          <div class="section-card" style="margin-top: 1.5rem;">
+            <div class="section-title">🔧 Raw Settings Data</div>
+            <details style="margin-top: 1rem;">
+              <summary style="cursor: pointer; padding: 0.75rem; background: #f8f9fa; border-radius: 6px; font-weight: 500;">Click to view raw JSON data</summary>
+              <pre style="background: #1e3a5f; color: #fff; padding: 1.5rem; border-radius: 8px; overflow-x: auto; margin-top: 1rem; font-size: 0.875rem; line-height: 1.6;">\${JSON.stringify(settings, null, 2)}</pre>
+            </details>
+          </div>
+          \`}
+        \`;
+      } catch (error) {
+        container.innerHTML = \`<div class="empty-state"><p>Error loading settings: \${error.message}</p></div>\`;
+      }
+    }
+    
+    async function loadLogsCategory(container, userEmail) {
+      const routes = [
+        { method: 'GET', path: '/api/user-logs', description: 'Get user activity logs', query: \`?email=\${encodeURIComponent(userEmail)}\` }
+      ];
+      
+      try {
+        const response = await fetch(\`/api/user-logs?email=\${encodeURIComponent(userEmail)}\`);
+        const logs = await response.json();
+        
+        container.innerHTML = \`
+          <div class="section-card">
+            <div class="section-title">📋 Activity Logs Routes</div>
+            <div class="route-grid">
+              \${routes.map(route => \`
+                <div class="route-card">
+                  <span class="route-method method-\${route.method.toLowerCase()}">\${route.method}</span>
+                  <div class="route-path">\${route.path}</div>
+                  <div class="route-description">\${route.description}</div>
+                  <div class="route-actions">
+                    <button class="btn btn-test btn-small" onclick="testRoute('\${route.method}', '\${route.path}\${route.query}')">Test</button>
+                    <a href="/logs?email=\${encodeURIComponent(userEmail)}" class="btn btn-view btn-small" target="_blank">View Page</a>
+                  </div>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">User Activity Logs (\${logs.length})</div>
+            <div class="route-item-data">
+              \${logs.length === 0 ? '<p style="text-align: center; color: #666; padding: 2rem;">No logs found</p>' : logs.map(log => \`
+                <div class="route-item">
+                  <div class="route-item-header">
+                    <div>
+                      <span class="route-item-method method-\${log.type === 'signup' ? 'post' : 'post'}" style="background: \${log.type === 'signup' ? '#48bb78' : '#4299e1'};">\${log.type.toUpperCase()}</span>
+                      <span style="font-weight: 600; color: #1e3a5f;">\${log.email}</span>
+                    </div>
+                    <span style="color: #666; font-size: 0.875rem;">\${new Date(log.timestamp).toLocaleString()}</span>
+                  </div>
+                  <div class="route-item-data">
+                    \${Object.entries(log.userInfo || {}).map(([key, value]) => \`
+                      <div class="data-item">
+                        <span class="data-label">\${key}:</span>
+                        <span class="data-value">\${typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                      </div>
+                    \`).join('')}
+                  </div>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+        \`;
+      } catch (error) {
+        container.innerHTML = \`<div class="empty-state"><p>Error loading logs: \${error.message}</p></div>\`;
+      }
+    }
+    
+    async function loadRoutesCategory(container, userEmail) {
+      const allRoutes = [
+        { category: 'Static & Pages', routes: [
+          { method: 'GET', path: '/uploads/*', description: 'Serve uploaded images' },
+          { method: 'GET', path: '/test-connection', description: 'Test connection page' },
+          { method: 'GET', path: '/logs', description: 'User activity logs UI' },
+          { method: 'GET', path: '/users', description: 'User management UI' }
+        ]},
+        { category: 'Health & System', routes: [
+          { method: 'GET', path: '/api/health', description: 'Health check endpoint' },
+          { method: 'GET', path: '/api/test', description: 'Simple test endpoint' },
+          { method: 'POST', path: '/api/admin/reload-users', description: 'Reload users from file' }
+        ]},
+        { category: 'Authentication', routes: [
+          { method: 'POST', path: '/api/auth/signup', description: 'Create new user account' },
+          { method: 'POST', path: '/api/auth/login', description: 'User login' },
+          { method: 'GET', path: '/api/auth/user', description: 'Get user by email', query: \`?email=\${encodeURIComponent(userEmail)}\` }
+        ]},
+        { category: 'Stripe Terminal', routes: [
+          { method: 'POST', path: '/api/stripe-terminal/connection-token', description: 'Create connection token' },
+          { method: 'POST', path: '/api/stripe-terminal/create-payment-intent', description: 'Create payment intent' },
+          { method: 'POST', path: '/api/stripe-terminal/process-payment', description: 'Process payment on reader' },
+          { method: 'POST', path: '/api/stripe-terminal/capture-payment', description: 'Capture payment intent' },
+          { method: 'GET', path: '/api/stripe-terminal/payment-intent/:id', description: 'Get payment intent status' },
+          { method: 'POST', path: '/api/stripe-terminal/cancel-payment', description: 'Cancel payment intent' }
+        ]},
+        { category: 'Subscriptions', routes: [
+          { method: 'GET', path: '/api/subscription/publishable-key', description: 'Get Stripe publishable key' },
+          { method: 'POST', path: '/api/subscription/create-subscription', description: 'Create Stripe Checkout session' },
+          { method: 'POST', path: '/api/subscription/update-status', description: 'Update subscription status' },
+          { method: 'GET', path: '/api/subscription/verify-session', description: 'Verify Stripe checkout session' }
+        ]},
+        { category: 'Menu Analysis', routes: [
+          { method: 'POST', path: '/api/menu/analyze', description: 'Upload and analyze menu file' },
+          { method: 'GET', path: '/api/menu/status/:jobId', description: 'Get menu analysis job status' }
+        ]}
+      ];
+      
+      container.innerHTML = allRoutes.map(section => \`
+        <div class="section-card">
+          <div class="section-title">\${section.category}</div>
+          <div class="route-grid">
+            \${section.routes.map(route => \`
+              <div class="route-card">
+                <span class="route-method method-\${route.method.toLowerCase()}">\${route.method}</span>
+                <div class="route-path">\${route.path}</div>
+                <div class="route-description">\${route.description}</div>
+                <div class="route-actions">
+                  <button class="btn btn-test btn-small" onclick="\${route.query ? \`testRoute('\${route.method}', '\${route.path}\${route.query}')\` : route.method === 'GET' && !route.path.includes(':') && !route.path.includes('*') ? \`testRoute('\${route.method}', '\${route.path}')\` : \"alert('Use API client or browser for this endpoint')\"}">\${route.query || (route.method === 'GET' && !route.path.includes(':') && !route.path.includes('*')) ? 'Test' : 'Info'}</button>
+                </div>
+              </div>
+            \`).join('')}
+          </div>
+        </div>
+      \`).join('');
+    }
+    
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+    
+    // Auto-refresh users every 30 seconds
+    setInterval(() => {
+      if (document.getElementById('tab-users').classList.contains('active')) {
+        loadUsers();
+      }
+    }, 30000);
+    
+    // Load users on page load
+    loadUsers();
+    
+    // Add event listeners for filters
+    const emailFilter = document.getElementById('emailFilter');
+    const limitFilter = document.getElementById('limitFilter');
+    if (emailFilter) emailFilter.addEventListener('input', debounce(loadUsers, 500));
+    if (limitFilter) limitFilter.addEventListener('change', loadUsers);
   </script>
 </body>
 </html>`;
